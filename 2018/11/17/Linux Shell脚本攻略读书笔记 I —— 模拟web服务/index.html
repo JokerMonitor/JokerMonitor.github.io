@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>Linux Shell脚本攻略读书笔记 I —— 模拟web服务 | Klay&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="最近在接触devops的工作,因此在同事的推荐下买了本linux Shell脚本攻略的书,经过一周看了前面两章，特此写了一个模拟web服务器的shell脚本暴露指定端口提供系统信息. 完整代码传送门：shell脚本学习随笔 /curry.sh  通过mkfifo创建管道文件接收标准输出以及标准错误信息  123response=&quot;/tmp/http-response-$RANDOM.pipe&quot;mk">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux Shell脚本攻略读书笔记 I —— 模拟web服务">
+<meta property="og:url" content="http://yoursite.com/2018/11/17/Linux Shell脚本攻略读书笔记 I —— 模拟web服务/index.html">
+<meta property="og:site_name" content="Klay&#39;s blog">
+<meta property="og:description" content="最近在接触devops的工作,因此在同事的推荐下买了本linux Shell脚本攻略的书,经过一周看了前面两章，特此写了一个模拟web服务器的shell脚本暴露指定端口提供系统信息. 完整代码传送门：shell脚本学习随笔 /curry.sh  通过mkfifo创建管道文件接收标准输出以及标准错误信息  123response=&quot;/tmp/http-response-$RANDOM.pipe&quot;mk">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-11-17T03:47:45.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux Shell脚本攻略读书笔记 I —— 模拟web服务">
+<meta name="twitter:description" content="最近在接触devops的工作,因此在同事的推荐下买了本linux Shell脚本攻略的书,经过一周看了前面两章，特此写了一个模拟web服务器的shell脚本暴露指定端口提供系统信息. 完整代码传送门：shell脚本学习随笔 /curry.sh  通过mkfifo创建管道文件接收标准输出以及标准错误信息  123response=&quot;/tmp/http-response-$RANDOM.pipe&quot;mk">
+  
+  <link rel="stylesheet" href="/css/index.css">
+</head>
+</html>
+<body style="
+
+
+  background-color: #eff0f6
+
+">
+  <div id="container">
+    <nav id="nav">
+  <header class="header">
+    <a href="/" class="title">Clover Tuan</a>
+  </header>
+  <div class="ctnWrap">
+    <div class="icons">
+      
+        
+          
+            <a href="https://dribbble.com/clovertuan" target="_blank" class="nav-icn iconfont icon-dribbble"></a>
+          
+        
+          
+            <a href="https://www.behance.net/clovertuan" target="_blank" class="nav-icn iconfont icon-behance"></a>
+          
+        
+          
+            <a href="http://clovertuan.lofter.com/" target="_blank" class="nav-icn iconfont icon-lofter"></a>
+          
+        
+          
+            <a href="https://www.instagram.com/clovertuan/" target="_blank" class="nav-icn iconfont icon-instagram"></a>
+          
+        
+          
+            <a href="https://github.com/cloverTuan" target="_blank" class="nav-icn iconfont icon-github"></a>
+          
+        
+      
+    </div>
+    <div class="menu">
+      
+        
+            <a href="/" class="nav-menu ">HOME</a>
+          
+        
+            <a href="/archives" class="nav-menu ">ARCHIVE</a>
+          
+        
+            <a href="/about" class="nav-menu ">ABOUT</a>
+          
+        
+      
+    </div>
+  </div>
+</nav>
+    <div id="main"><section class="article">
+  <h2 class="title">Linux Shell脚本攻略读书笔记 I —— 模拟web服务</h2>
+  <p class="sub">Nov 17, 2018</p>
+  <article class="content">
+    <p>最近在接触devops的工作,因此在同事的推荐下买了本linux Shell脚本攻略的书,经过一周看了前面两章，特此写了一个模拟web服务器的shell脚本暴露指定端口提供系统信息.</p>
+<p>完整代码传送门：shell脚本学习随笔 /curry.sh</p>
+<ol>
+<li>通过mkfifo创建管道文件接收标准输出以及标准错误信息</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">response=<span class="string">"/tmp/http-response-<span class="variable">$RANDOM</span>.pipe"</span></span><br><span class="line"></span><br><span class="line">mkfifo <span class="variable">$response</span> &gt;&gt; /dev/null 2&gt;<span class="variable">$1</span></span><br></pre></td></tr></table></figure>
+<p>2.创建文档用户存储server信息</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">template=template.txt</span><br><span class="line"></span><br><span class="line">touch <span class="variable">$template</span></span><br></pre></td></tr></table></figure>
+<p>3.终端关闭后删除临时文件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">trap</span> <span class="string">"rm -rf <span class="variable">$response</span>"</span> EXIT INT TERM</span><br></pre></td></tr></table></figure>
+<p>4.定义start_server函数用于开启端口监控</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="title">start_server</span></span>() &#123;</span><br><span class="line"></span><br><span class="line"><span class="built_in">local</span> port=<span class="variable">$&#123;1:-8080&#125;</span><span class="keyword">while</span> <span class="literal">true</span>; docat <span class="variable">$response</span> | nc -l <span class="variable">$port</span> &gt; &gt;(handle_request) || <span class="built_in">break</span>;<span class="keyword">done</span>&#125; <span class="comment">#</span></span><br></pre></td></tr></table></figure>
+<p>这里利用nc -l $port开启端口监控并执行handle_request子shell</p>
+<p>5.定义handle_request函数处理具体的request</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="title">parse_request</span></span>() &#123;</span><br><span class="line"></span><br><span class="line"><span class="built_in">read</span> request <span class="comment">#等待命令行输入</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"<span class="variable">$request</span>"</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">local</span> service_name=$(<span class="built_in">echo</span> <span class="string">"<span class="variable">$request</span>"</span> | cut -d <span class="string">' '</span> -f2) <span class="comment">#通过cut命令分隔字符串获取具体的service</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"<span class="variable">$service_name</span>"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ <span class="string">"<span class="variable">$service_name</span>"</span> == <span class="string">"/server_info"</span> ]; <span class="keyword">then</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"------- disk usage --------- "</span> &gt;&gt; <span class="variable">$template</span></span><br><span class="line"></span><br><span class="line">df &gt;&gt; <span class="variable">$template</span> <span class="comment">#将server的硬盘信息重定向到template.txt</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"----------- the system run time ------------ "</span> &gt;&gt; <span class="variable">$template</span></span><br><span class="line"></span><br><span class="line">uptime | sed <span class="string">'s/.*up \(.*\),.*users.*/\1/'</span> &gt;&gt; <span class="variable">$template</span> <span class="comment">#通过uptime 命令解析系统运行时间等信息并重定向到template.txt</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"------------ cpu usage info -------------"</span> &gt;&gt; <span class="variable">$template</span></span><br><span class="line"></span><br><span class="line">ps -eocomm,pcpu | egrep -v <span class="string">'(0.0)|(0,0)|(%CPU)'</span> | sort -nrk 2 &gt;&gt; <span class="variable">$template</span> <span class="comment">#打印CPU使用率删除无效数据并通过sort排序</span></span><br><span class="line"></span><br><span class="line">cat <span class="variable">$template</span> &gt;&gt; <span class="variable">$response</span> <span class="comment">#将template.txt的信息重定向到管道response 最后由nc返回到客户端</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">""</span> &gt; <span class="variable">$template</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">return</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"service not found "</span> &gt; <span class="variable">$response</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>补充说明：</p>
+<p>有一些细节需要注意:</p>
+<ol>
+<li><p>trap “rm -rf $response” 这里如果在response后加空格或者任意字符,shell会将其与response作为一个字段去获取变量会导致失败。在这推荐使用${response}的方式具体指定字段名称</p>
+</li>
+<li><p>local port=${1:-8080} local表示局部变量作用域只在这个函数中，${1:-8080} 表示获取命令行第一个参数,若没有则默认8080.</p>
+</li>
+<li><p>(parse_request) 小括号内执行cmd 意为子shell 不会影响当前上下文</p>
+</li>
+<li><p>echo $request | cut -d “ “ -f2 表示用“ ”分割request 取第二个数据 (-f1表示第一个 -f2表示第二个 以此类推)</p>
+</li>
+<li><p>uptime | sed ‘s/.<em>up (.</em>),.<em>users.</em>/\1/‘ 这里uptime会获取到系统的加电运行时长,利用sed命令截取单词up于第二个逗号之间的内容替换掉整个数据</p>
+</li>
+<li><p>ps -eocomm,pcpu | egrep -v ‘(0.0)|(0,0)|(%CPU)’ | sort -nrk 2 命令ps -eocomm,pcpu 会生成一份系统活动报告 -e指定采集所有进程的数据而不仅限于当前回话的进程 -o 指定输出格式comm 指定输出命令名 pcpu输出CPU的占用率 egrep -v表示过滤指定内容 sork -n表示按照数字排序 -r表示逆序 -k指定列 sort -nrk 2表示按照第二列数字进行逆序排列</p>
+</li>
+<li><p>nc -l port 这里使用nc套接字进行网络数据传输 nc -l port &gt; &gt; 这里第一个&gt;表示标准输出 空格后的&gt; 表示以&gt;后的内容作为文件名</p>
+</li>
+</ol>
+<p>执行./curry.sh [port] 这里的port为optional 默认为8080</p>
+<p>成功运行后,有两种方式调用端口:</p>
+<p>1.cat HOST PORT &lt; source_file </p>
+<p>2.curl <a href="http://host:port/service_info" target="_blank" rel="noopener">http://host:port/service_info</a></p>
+
+  </article>
+  <footer class="f-cf">
+    
+      <a href="/2018/11/17/shell-II/" class="link f-fl">⟵Linux Shell脚本攻略读书笔记 II —— 自动化同步公钥实现无密码登录</a>
+    
+    
+  </footer>
+</section></div>
+    <footer id="footer" class="f-cf">
+  d.guangying@foxmail.com
+  
+    
+      
+        · <a href="https://dribbble.com/clovertuan" target="_blank" class="nav-icn">Dribbble</a>
+      
+    
+      
+        · <a href="https://www.behance.net/clovertuan" target="_blank" class="nav-icn">Behance</a>
+      
+    
+      
+        · <a href="http://clovertuan.lofter.com/" target="_blank" class="nav-icn">Lofter</a>
+      
+    
+      
+        · <a href="https://www.instagram.com/clovertuan/" target="_blank" class="nav-icn">Instagram</a>
+      
+    
+      
+        · <a href="https://github.com/cloverTuan" target="_blank" class="nav-icn">GitHub</a>
+      
+    
+  
+  <span class="copyright">All rights reserved @Clover Tuan</span>
+</footer>
+  </div>
+</body>
+</html>

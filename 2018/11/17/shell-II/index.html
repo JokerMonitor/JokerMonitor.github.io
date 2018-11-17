@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>Linux Shell脚本攻略读书笔记 II —— 自动化同步公钥实现无密码登录 | Klay&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="实现ssh免密需要两步: 1.在本机创建SSH密钥  ssh-keygen -t rsa 2.将生成的公钥加入到远程主机的~/.ssh/authorized_keys中 这里要使用sshpass工具 所以需要先安装： 123456Ubuntu/Debian: apt-get install sshpassFedora/CentOS: yum install sshpassArch: pacman">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux Shell脚本攻略读书笔记 II —— 自动化同步公钥实现无密码登录">
+<meta property="og:url" content="http://yoursite.com/2018/11/17/shell-II/index.html">
+<meta property="og:site_name" content="Klay&#39;s blog">
+<meta property="og:description" content="实现ssh免密需要两步: 1.在本机创建SSH密钥  ssh-keygen -t rsa 2.将生成的公钥加入到远程主机的~/.ssh/authorized_keys中 这里要使用sshpass工具 所以需要先安装： 123456Ubuntu/Debian: apt-get install sshpassFedora/CentOS: yum install sshpassArch: pacman">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/5407441-98c00a7debfd9dc6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1000">
+<meta property="og:updated_time" content="2018-11-17T03:57:20.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux Shell脚本攻略读书笔记 II —— 自动化同步公钥实现无密码登录">
+<meta name="twitter:description" content="实现ssh免密需要两步: 1.在本机创建SSH密钥  ssh-keygen -t rsa 2.将生成的公钥加入到远程主机的~/.ssh/authorized_keys中 这里要使用sshpass工具 所以需要先安装： 123456Ubuntu/Debian: apt-get install sshpassFedora/CentOS: yum install sshpassArch: pacman">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/5407441-98c00a7debfd9dc6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1000">
+  
+  <link rel="stylesheet" href="/css/index.css">
+</head>
+</html>
+<body style="
+
+
+  background-color: #eff0f6
+
+">
+  <div id="container">
+    <nav id="nav">
+  <header class="header">
+    <a href="/" class="title">Clover Tuan</a>
+  </header>
+  <div class="ctnWrap">
+    <div class="icons">
+      
+        
+          
+            <a href="https://dribbble.com/clovertuan" target="_blank" class="nav-icn iconfont icon-dribbble"></a>
+          
+        
+          
+            <a href="https://www.behance.net/clovertuan" target="_blank" class="nav-icn iconfont icon-behance"></a>
+          
+        
+          
+            <a href="http://clovertuan.lofter.com/" target="_blank" class="nav-icn iconfont icon-lofter"></a>
+          
+        
+          
+            <a href="https://www.instagram.com/clovertuan/" target="_blank" class="nav-icn iconfont icon-instagram"></a>
+          
+        
+          
+            <a href="https://github.com/cloverTuan" target="_blank" class="nav-icn iconfont icon-github"></a>
+          
+        
+      
+    </div>
+    <div class="menu">
+      
+        
+            <a href="/" class="nav-menu ">HOME</a>
+          
+        
+            <a href="/archives" class="nav-menu ">ARCHIVE</a>
+          
+        
+            <a href="/about" class="nav-menu ">ABOUT</a>
+          
+        
+      
+    </div>
+  </div>
+</nav>
+    <div id="main"><section class="article">
+  <h2 class="title">Linux Shell脚本攻略读书笔记 II —— 自动化同步公钥实现无密码登录</h2>
+  <p class="sub">Nov 17, 2018</p>
+  <article class="content">
+    <p>实现ssh免密需要两步:</p>
+<p>1.在本机创建SSH密钥  ssh-keygen -t rsa</p>
+<p>2.将生成的公钥加入到远程主机的~/.ssh/authorized_keys中</p>
+<p>这里要使用sshpass工具 所以需要先安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">Ubuntu/Debian: apt-get install sshpass</span><br><span class="line"></span><br><span class="line">Fedora/CentOS: yum install sshpass</span><br><span class="line"></span><br><span class="line">Arch: pacman -S sshpass</span><br></pre></td></tr></table></figure>
+<p>先不多说,直接上代码</p>
+<p>完成代码git仓库 <a href="https://github.com/JokerMonitor/shell" target="_blank" rel="noopener">shell脚本学习随笔</a> /auto_login.sh</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">read</span> -p <span class="string">"please input your username:"</span> username</span><br><span class="line"></span><br><span class="line"><span class="built_in">read</span> -s -p <span class="string">"please input your password:"</span> password</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">sync_key</span></span>() &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> <span class="built_in">read</span> ip;</span><br><span class="line"></span><br><span class="line"><span class="keyword">do</span> (</span><br><span class="line"></span><br><span class="line">sshpass -p <span class="variable">$password</span> ssh -o StrictHostKeyChecking=no <span class="variable">$username</span>@<span class="variable">$ip</span> <span class="string">"cat &gt;&gt; /<span class="variable">$username</span>/.ssh/authorized_keys"</span> &lt; /<span class="variable">$username</span>/.ssh/id_rsa.pub ;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ $? -eq 0 ];</span><br><span class="line"></span><br><span class="line"><span class="keyword">then</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"the server <span class="variable">$ip</span> set successful ."</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"the server <span class="variable">$ip</span> set failed ."</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line">)&amp;</span><br><span class="line"></span><br><span class="line"><span class="keyword">done</span> &lt; servers.list</span><br><span class="line"></span><br><span class="line"><span class="built_in">wait</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ -e /<span class="variable">$username</span>/.ssh/id_rsa.pub -a -e /<span class="variable">$username</span>/.ssh/id_rsa ];</span><br><span class="line"></span><br><span class="line"><span class="keyword">then</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"the key is already"</span></span><br><span class="line"></span><br><span class="line">sync_key</span><br><span class="line"></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"the key is not exsits . "</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">exit</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">fi</span></span><br></pre></td></tr></table></figure>
+<p>要点：</p>
+<ol>
+<li><p>ssh采用了非对称加密,密钥包含两个部分 公钥和私钥. ssh-keygen 可以生成公钥以及私钥。要实现免密登录则需要将公钥放置在目标机器中(~/.ssh/authorized_keys)</p>
+</li>
+<li><p>read -s 指定不显示用户输入 用于密码的输入</p>
+</li>
+<li><p>-e [path] 用以验证文件是否存在 -a = –and </p>
+</li>
+<li><p>ssh-keygen -t rsa 指定rsa算法生成密钥</p>
+</li>
+<li><p>while read line; do () done &lt; filename; 表示对filename文件中逐行进行处理，filename文件作为stdin(标准输入)</p>
+</li>
+<li><p>在while中使用()&amp; done wait 语法表示并行使用子shell执行小括号内的命令 wait表示等待各个shell执行完毕</p>
+</li>
+<li><p>这里使用sshpass工具向ssh指定主机密码。 由于ssh没有指定密码输入指令因此无法实现自动填充密码，因此借助sshpass工具实现。其中-o StrictHostKeyChecking=no表示在第一次登陆时不必进行警告.<br>这里还可以使用expect工具来实现ssh密码的输入,由于expect是另一种解释器因此没有使用。</p>
+</li>
+<li><p>这里使用了ssh user@host “command” 命令 表示在远程主机上执行command命令。这里将本机的pub key作为标准输入提供给指定的命令</p>
+</li>
+<li><p>$? 表示获取上一步命令的执行结果 0 表示成功 非0表示失败</p>
+</li>
+</ol>
+<p>仓库中有auto_login.sh ,  auto_login.session 以及 auto_login.log</p>
+<p>利用scriptreplay auto_login.log auto_login.session </p>
+<p>运行录制视频运行auto_login.sh即可</p>
+<p>执行截图效果如下:</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5407441-98c00a7debfd9dc6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1000" alt="find 1"></p>
+
+  </article>
+  <footer class="f-cf">
+    
+    
+      <a href="/2018/11/17/Linux Shell脚本攻略读书笔记 I —— 模拟web服务/" class="link f-fr">Linux Shell脚本攻略读书笔记 I —— 模拟web服务⟶</a>
+    
+  </footer>
+</section></div>
+    <footer id="footer" class="f-cf">
+  d.guangying@foxmail.com
+  
+    
+      
+        · <a href="https://dribbble.com/clovertuan" target="_blank" class="nav-icn">Dribbble</a>
+      
+    
+      
+        · <a href="https://www.behance.net/clovertuan" target="_blank" class="nav-icn">Behance</a>
+      
+    
+      
+        · <a href="http://clovertuan.lofter.com/" target="_blank" class="nav-icn">Lofter</a>
+      
+    
+      
+        · <a href="https://www.instagram.com/clovertuan/" target="_blank" class="nav-icn">Instagram</a>
+      
+    
+      
+        · <a href="https://github.com/cloverTuan" target="_blank" class="nav-icn">GitHub</a>
+      
+    
+  
+  <span class="copyright">All rights reserved @Clover Tuan</span>
+</footer>
+  </div>
+</body>
+</html>
